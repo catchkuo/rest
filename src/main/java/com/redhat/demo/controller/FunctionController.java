@@ -1,11 +1,15 @@
 package com.redhat.demo.controller;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -17,16 +21,30 @@ public class FunctionController {
 
 //	http://localhost:8080/fn/fib?lv=44
 	@RequestMapping(value = "/fib", method = RequestMethod.GET,params = {"lv"})
-	public String runFibLv(@RequestParam(value = "lv") int lv) {
+	public String runFibLv(@RequestParam(value = "lv") int lv,@RequestHeader Map<String, String> headers) throws UnknownHostException {
 
 		SimpleDateFormat format = new SimpleDateFormat("HH:mm:ss");
 		Date date1 = new Date();
 		
 		
+		System.out.println("--------------------------------------------------");
+		
+		headers.forEach((key, value) -> {
+			 System.out.println(String.format("Header '%s' = %s", key, value));
+		    });
+		 
+		System.out.println("Start time:"+format.format(date1));
+		System.out.println( "My jost Name is :" + InetAddress.getLocalHost().getHostName());
+		System.out.println( "Lv:" +lv );
+		
+		System.out.println("--------------------------------------------------");
+		
+		 
 		
 		fib(lv);
 		
 		Date date2 = new Date();
+		System.out.println("End time:"+format.format(date2));
 		Long difference = date2.getTime() - date1.getTime(); 
 		
 		return  difference.toString() + "ms";
