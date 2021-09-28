@@ -78,7 +78,7 @@ public class FunctionController {
 		
 
 		String fooResourceUrl
-		  = "http://rest-backen:8080/fn/fib?lv=1";
+		  = "http://rest-backend:8080/fn/fib?lv=1";
 		ResponseEntity<String> response
 		  = restTemplate.getForEntity(fooResourceUrl, String.class);
 		
