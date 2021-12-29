@@ -2,6 +2,7 @@ package com.redhat.demo.controller;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
@@ -9,6 +10,9 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -77,10 +81,19 @@ public class FunctionController {
 		 
 		
 
-		String fooResourceUrl
-		  = "http://rest-backend:8080/fn/fib?lv=1";
-		ResponseEntity<String> response
-		  = restTemplate.getForEntity(fooResourceUrl, String.class);
+		
+		String fooResourceUrl = "http://rest-backend:8080/fn/fib?lv=1";
+		
+		HttpHeaders reqheaders = new HttpHeaders();
+		reqheaders.set("end-user", "vip");
+		HttpEntity<String> entity = new HttpEntity<String>("parameters", reqheaders);
+		
+//		ResponseEntity<String> response =restTemplate.exchange(fooResourceUrl, HttpMethod.GET,entity,String.class);
+		
+		ResponseEntity<String> response = restTemplate.getForEntity(fooResourceUrl, String.class);
+		
+
+
 		
 		System.out.println(response.getBody().toString());
 		
@@ -109,6 +122,12 @@ public class FunctionController {
 		 */
 
 		return messageSource.getMessage("good.morning", null, LocaleContextHolder.getLocale());
+	}
+	
+	@RequestMapping(value = "/error", method = RequestMethod.GET)
+	public String getError() throws SQLException {
+	
+		throw new SQLException("my fault");
 	}
 
 	@RequestMapping(value = "/get-greeting-name", method = RequestMethod.GET)
