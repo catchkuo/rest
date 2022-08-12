@@ -4,15 +4,13 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.Map;
+import java.util.function.Supplier;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.MessageSource;
-import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,25 +19,50 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
+import io.micrometer.core.annotation.Timed;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.MeterRegistry;
+
+
 @RestController
 @RequestMapping("/fn")
 public class FunctionController {
 	
-	static RestTemplate restTemplate = new RestTemplate();
+//	static RestTemplate restTemplate = new RestTemplate();
+	
+	
+	private RestTemplate restTemplate = new RestTemplate();
 
+	
+	 public FunctionController(MeterRegistry registry) {
+		 
+		 Supplier supplierNum = () -> { return 40; };
+		    Gauge.builder("usercontroller.usercount",supplierNum).
+		      tag("version","v1").
+		      description("usercontroller descrip").
+		      register(registry);
+		  }
+
+
+	
 //	http://localhost:8080/fn/fib?lv=44
 //	curl -d "lv=2" -X POST http://localhost:8080/fn/fib
 	@RequestMapping(value = "/fib", method = RequestMethod.GET,params = {"lv"})
+	@Timed(value="user.get.time",description="time to retrieve users",percentiles={0.5,0.9})
 	public String runFibLv(@RequestParam(value = "lv") int lv,@RequestHeader Map<String, String> headers) throws UnknownHostException {
 
 		SimpleDateFormat format = new SimpleDateFormat("HH:mm:ss");
 		Date date1 = new Date();
 		
 		
+        
+	
 		System.out.println("GET--------------------------------------------------");
 		
 		headers.forEach((key, value) -> {
 			 System.out.println(String.format("Header '%s' = %s", key, value));
+			 
+		
 		    });
 		 
 		System.out.println("Start time:"+format.format(date1));
@@ -48,8 +71,7 @@ public class FunctionController {
 		
 		System.out.println("--------------------------------------------------");
 		
-		 
-		
+
 		fib(lv);
 		
 		Date date2 = new Date();
@@ -78,9 +100,6 @@ public class FunctionController {
 		
 		System.out.println("--------------------------------------------------");
 		
-		 
-		
-
 		
 		String fooResourceUrl = "http://rest-backend:8080/fn/fib?lv=1";
 		
@@ -90,12 +109,12 @@ public class FunctionController {
 		
 //		ResponseEntity<String> response =restTemplate.exchange(fooResourceUrl, HttpMethod.GET,entity,String.class);
 		
-		ResponseEntity<String> response = restTemplate.getForEntity(fooResourceUrl, String.class);
-		
 
-
+        ResponseEntity<String> response = restTemplate.getForEntity(fooResourceUrl, String.class);
+  
+    
 		
-		System.out.println(response.getBody().toString());
+		
 		
 
 		Date date2 = new Date();
@@ -105,24 +124,67 @@ public class FunctionController {
 		
 		return  difference.toString() + "ms";
 	}
+	
+	
+	
+	@RequestMapping(value = "/route", method = RequestMethod.GET,params = {"lv"})
+	public String route(@RequestParam(value = "lv") int lv,@RequestHeader Map<String, String> headers) throws UnknownHostException {
 
+
+		SimpleDateFormat format = new SimpleDateFormat("HH:mm:ss");
+		Date date1 = new Date();
+		
+		
+		System.out.println("POST--------------------------------------------------");
+		
+		headers.forEach((key, value) -> {
+			 System.out.println(String.format("Header '%s' = %s", key, value));
+		    });
+		 
+		System.out.println("Start time:"+format.format(date1));
+		System.out.println( "My jost Name is :" + InetAddress.getLocalHost().getHostName());
+		System.out.println( "Lv:" +lv );
+		
+		System.out.println("--------------------------------------------------");
+		
+		 
+		String fooResourceUrl = "http://localhost:8034/user/all";
+		
+		
+	 
+		HttpHeaders reqheaders = new HttpHeaders();
+		reqheaders.set("end-user", "vip");
+		HttpEntity<String> entity = new HttpEntity<String>("parameters", reqheaders);
+		
+		
+		ResponseEntity<String> response = restTemplate.getForEntity(fooResourceUrl, String.class);
+		
+
+		
+		
+
+	
+		
+		return diffTime(format,date1);
+//		return  difference.toString() + "ms";
+	}
+	
+
+	public String  diffTime(SimpleDateFormat format,Date date1) {
+		
+		Date date2 = new Date();
+		System.out.println("End time:"+format.format(date2));
+		Long difference = date2.getTime() - date1.getTime();
+		
+		return difference.toString() + "ms";
+		
+		
+	}
 
 	   
 
-	@Autowired
-	MessageSource messageSource;
 
-	@RequestMapping(value = "/get-greeting", method = RequestMethod.GET)
-	public String greeting() {
-		/**
-		 * @LocaleContextHolder.getLocale() Return the Locale associated with the given
-		 * user context,if any, or the system default Locale otherwise. This is
-		 * effectively a replacement for Locale.getDefault(), able to optionally respect
-		 * a user-level Locale setting.
-		 */
 
-		return messageSource.getMessage("good.morning", null, LocaleContextHolder.getLocale());
-	}
 	
 	@RequestMapping(value = "/error", method = RequestMethod.GET)
 	public String getError() throws SQLException {
@@ -130,11 +192,6 @@ public class FunctionController {
 		throw new SQLException("my fault");
 	}
 
-	@RequestMapping(value = "/get-greeting-name", method = RequestMethod.GET)
-	public String greetingWithName() {
-		String[] params = new String[] { "Ikhiloya", "today" };
-		return messageSource.getMessage("good.morning.name", params, LocaleContextHolder.getLocale());
-	}
 
 	public static long fib(int n) {
 		if (n == 1)
