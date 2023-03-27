@@ -34,14 +34,14 @@ public class FunctionController {
 	private RestTemplate restTemplate = new RestTemplate();
 
 	
-	 public FunctionController(MeterRegistry registry) {
-		 
-		 Supplier supplierNum = () -> { return 40; };
-		    Gauge.builder("usercontroller.usercount",supplierNum).
-		      tag("version","v1").
-		      description("usercontroller descrip").
-		      register(registry);
-		  }
+//	 public FunctionController(MeterRegistry registry) {
+//		 
+//		 Supplier supplierNum = () -> { return 40; };
+//		    Gauge.builder("usercontroller.usercount",supplierNum).
+//		      tag("version","v1").
+//		      description("usercontroller descrip").
+//		      register(registry);
+//		  }
 
 
 	

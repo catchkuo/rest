@@ -10,7 +10,6 @@ import org.springframework.web.client.RestTemplate;
 
 @SpringBootApplication
 @EnableAutoConfiguration
-@EntityScan("com.redhat.demo")
 public class RestDemoApplication {
 	
 
